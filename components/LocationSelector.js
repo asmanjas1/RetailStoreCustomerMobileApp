@@ -1,11 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, Dimensions, Alert, KeyboardAvoidingView, Platform, FlatList, 
-  SafeAreaView, 
-  TouchableOpacity} from 'react-native';
+import { View, StyleSheet, Alert, KeyboardAvoidingView, Platform, FlatList, 
+  SafeAreaView} from 'react-native';
 import * as Location from 'expo-location';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
-import { Ionicons } from '@expo/vector-icons';
-const GOOGLE_API_KEY = 'AIzaSyBfvPwGA0dBBwwADiWm3GbQ8b9HFFECbkg';
 
 const LocationSelector = () => {
   const [address, setAddress] = useState(null);
