@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
-import { TextInput, Button, Text, Title } from 'react-native-paper';
+import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, TextInput, Text, 
+  TouchableOpacity, ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { getErrorMsgFromAxiosErrorObject } from '../utils/AppUtils';
 import { useAuth } from '../navigation/AuthContext';
+import { commonStyles } from '../utils/CommonStyles';
 
 const SignupScreen = ({ navigation }) => {
   const { login } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -26,71 +28,81 @@ const SignupScreen = ({ navigation }) => {
 
   const handleSignup = () => {
     if (validateForm()) {
+      setIsLoading(true);
       const user = { phoneNumber, password, name };
       axios.post("https://retailstorecloudbase.el.r.appspot.com/v1/person/signup", user)
       .then(response => {
         axios.post("https://retailstorecloudbase.el.r.appspot.com/v1/person/signin", user)
         .then(response => {
           AsyncStorage.setItem('user', JSON.stringify(response.data));
+          setIsLoading(false);
           login();
         }).catch(error => {
+            setIsLoading(false);
             alert(getErrorMsgFromAxiosErrorObject(error));
         });
       }).catch(error => {
+        setIsLoading(false);
         alert(getErrorMsgFromAxiosErrorObject(error));
       });
     }
   };
 
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+  }
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
     >
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps={'handled'}>
         <View style={styles.innerContainer}>
-          <Title style={styles.title}>Signup</Title>
           <TextInput
-            label="Name"
+            placeholder="Name"
             value={name}
             onChangeText={setName}
-            style={styles.input}
+            style={commonStyles.input}
             error={!!errors.name}
           />
           {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
           <TextInput
-            label="Mobile"
+            placeholder="Mobile"
             value={phoneNumber}
             onChangeText={setPhoneNumber}
-            style={styles.input}
+            style={commonStyles.input}
             keyboardType="phone-pad"
             error={!!errors.phoneNumber}
           />
           {errors.phoneNumber && <Text style={styles.errorText}>{errors.phoneNumber}</Text>}
           <TextInput
-            label="Password"
+            placeholder="Password"
             secureTextEntry
             value={password}
             onChangeText={setPassword}
-            style={styles.input}
+            style={commonStyles.input}
             error={!!errors.password}
           />
           {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
           <TextInput
-            label="Confirm Password"
+            placeholder="Confirm Password"
             secureTextEntry
             value={confirmPassword}
             onChangeText={setConfirmPassword}
-            style={styles.input}
+            style={commonStyles.input}
             error={!!errors.confirmPassword}
           />
           {errors.confirmPassword && (
             <Text style={styles.errorText}>{errors.confirmPassword}</Text>
           )}
-          <Button mode="contained" onPress={handleSignup} style={styles.button}>
-            Signup
-          </Button>
+          <TouchableOpacity style={commonStyles.button} onPress={handleSignup} disabled={isLoading}>
+            <Text style={commonStyles.buttonText}>Signup</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -110,20 +122,10 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
   },
-  title: {
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  input: {
-    marginBottom: 10,
-  },
-  button: {
-    marginTop: 20,
-  },
   errorText: {
     color: 'red',
     marginBottom: 10,
-  },
+  }
 });
 
 export default SignupScreen;

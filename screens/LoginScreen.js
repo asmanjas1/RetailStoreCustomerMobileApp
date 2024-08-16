@@ -1,14 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, TouchableOpacity } from 'react-native';
-import { TextInput, Button, Text, Title } from 'react-native-paper';
+import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, TouchableOpacity, 
+  ActivityIndicator, TextInput,
+  Text} from 'react-native';
 import axios from 'axios';
 import { getErrorMsgFromAxiosErrorObject } from '../utils/AppUtils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../navigation/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
+import { commonStyles } from '../utils/CommonStyles';
 
 const LoginScreen = ({ navigation }) => {
   const { login } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState({});
@@ -24,12 +27,15 @@ const LoginScreen = ({ navigation }) => {
 
   const handleLogin = async () => {
     if (validateForm()) {
+        setIsLoading(true);
         const user = { phoneNumber, password };
         axios.post("https://retailstorecloudbase.el.r.appspot.com/v1/person/signin", user)
         .then(response => {
           AsyncStorage.setItem('user', JSON.stringify(response.data));
+          setIsLoading(false);
           login();
         }).catch(error => {
+            setIsLoading(false);
             alert(getErrorMsgFromAxiosErrorObject(error));
         });
     }
@@ -39,27 +45,33 @@ const LoginScreen = ({ navigation }) => {
     setIsPasswordVisible(!isPasswordVisible);
   };
 
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+}
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps={'handled'}>
         <View style={styles.innerContainer}>
-          <Title style={styles.title}>Login</Title>
           <TextInput
-            label="Mobile"
+            placeholder="Mobile"
             value={phoneNumber}
             onChangeText={setPhoneNumber}
-            style={styles.input}
+            style={commonStyles.input}
             keyboardType="phone-pad"
             error={!!errors.phoneNumber}
           />
           {errors.phoneNumber && <Text style={styles.errorText}>{errors.phoneNumber}</Text>}
           <View style={styles.passwordContainer}>
           <TextInput
-            label="Password"
+            placeholder="Password"
             secureTextEntry={!isPasswordVisible}
             value={password}
             onChangeText={setPassword}
@@ -71,12 +83,13 @@ const LoginScreen = ({ navigation }) => {
           </TouchableOpacity>
           </View>
           {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
-          <Button mode="contained" onPress={handleLogin} style={styles.button}>
-            Login
-          </Button>
-          <Button onPress={() => navigation.navigate('Signup')} style={styles.link}>
-            Don't have an account? Signup
-          </Button>
+          <TouchableOpacity style={commonStyles.button} onPress={handleLogin} disabled={isLoading}>
+            <Text style={commonStyles.buttonText}>Login</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={commonStyles.button} onPress={() => navigation.navigate('Signup')}>
+            <Text style={commonStyles.buttonText}>Don't have an account? Signup</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -96,23 +109,10 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
   },
-  title: {
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  input: {
-    marginBottom: 10,
-  },
   passwordInput: {
+    padding: 10,
     marginBottom: 10,
     flex: 0.9,
-  },
-  button: {
-    marginTop: 20,
-  },
-  link: {
-    marginTop: 10,
-    alignSelf: 'center',
   },
   errorText: {
     color: 'red',
@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
     padding: 5,
     flex: 0.1,
     alignItems: 'flex-end',
-  },
+  }
 });
 
 export default LoginScreen;

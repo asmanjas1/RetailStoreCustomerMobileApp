@@ -24,7 +24,7 @@ const ProtectedRoute = ({ component: Component, navigation }) => {
     return <ActivityIndicator size="large" color="#0000ff" />;
   }
 
-  return isAuthenticated ? <Component /> : null;
+  return isAuthenticated ? <Component navigation={navigation }/> : null;
 };
 
 export default ProtectedRoute;

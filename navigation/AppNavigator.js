@@ -5,11 +5,11 @@ import { DefaultTheme, Provider as PaperProvider } from 'react-native-paper';
 
 import LoginScreen from '../screens/LoginScreen';
 import SignupScreen from '../screens/SignupScreen';
-import ProfileScreen from '../screens/ProfileScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { View, ActivityIndicator } from 'react-native';
 import ProtectedRoute from './ProtectedRoute ';
 import { useAuth } from './AuthContext';
+import BottomTabNavigator from './BottomTabNavigator';
 
 const Stack = createStackNavigator();
 
@@ -54,27 +54,27 @@ const AppNavigator = () => {
   return (
     <PaperProvider theme={theme}>
       <NavigationContainer>
-            <Stack.Navigator
-                screenOptions={{
-                headerStyle: { backgroundColor: theme.colors.primary },
-                headerTintColor: '#fff',
-                }}
-            >
-                {isAuthenticated ? (
-                    <>
-                    <Stack.Screen
-                    name="Profile"
-                    options={{ headerShown: false }}
-                    children={(props) => <ProtectedRoute component={ProfileScreen} {...props} />}
-                    />
-                    </>
-                 ) : (
-                    <>
-                    <Stack.Screen name="Login" component={LoginScreen} />
-                    <Stack.Screen name="Signup" component={SignupScreen} />
-                    </>
-                )}    
-            </Stack.Navigator>
+        <Stack.Navigator
+            screenOptions={{
+            headerStyle: { backgroundColor: theme.colors.primary },
+            headerTintColor: '#fff',
+            }}
+        >
+            {isAuthenticated ? (
+                <>
+                <Stack.Screen
+                name="MainScreen"
+                options={{ headerShown: false }}
+                children={(props) => <ProtectedRoute component={BottomTabNavigator} {...props} />}
+                />
+                </>
+              ) : (
+                <>
+                <Stack.Screen name="Login" component={LoginScreen} />
+                <Stack.Screen name="Signup" component={SignupScreen} />
+                </>
+            )}    
+        </Stack.Navigator>
       </NavigationContainer>
     </PaperProvider>
   );
