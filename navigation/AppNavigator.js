@@ -10,6 +10,8 @@ import { View, ActivityIndicator } from 'react-native';
 import ProtectedRoute from './ProtectedRoute ';
 import { useAuth } from './AuthContext';
 import BottomTabNavigator from './BottomTabNavigator';
+import AddressScreen from '../screens/AddressScreen';
+import YourComponent from '../screens/Test';
 
 const Stack = createStackNavigator();
 
@@ -26,30 +28,30 @@ const AppNavigator = () => {
     const [isLoading, setIsLoading] = useState(true);
     const { isAuthenticated, login, logout } = useAuth();
     useEffect(() => {
-        const checkAuth = async () => {
-          try {
-            const userToken = await AsyncStorage.getItem('user');
-            if(!!userToken) {
-                login();
-            } else {
-                logout();
-            }         
-          } catch (error) {
-            console.error('Error checking authentication status', error);
-          } finally {
-            setIsLoading(false);
-          }
+      const checkAuth = async () => {
+        try {
+          const userToken = await AsyncStorage.getItem('user');
+          if(!!userToken) {
+              login();
+          } else {
+              logout();
+          }         
+        } catch (error) {
+          console.error('Error checking authentication status', error);
+        } finally {
+          setIsLoading(false);
         }
-        checkAuth();
+      }
+      checkAuth();
     }, []);
 
-    if (isLoading) {
-        return (
-          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <ActivityIndicator size="large" color="#0000ff" />
-          </View>
-        );
-    }
+  if (isLoading) {
+      return (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color="#0000ff" />
+        </View>
+      );
+  }
         
   return (
     <PaperProvider theme={theme}>
@@ -63,9 +65,19 @@ const AppNavigator = () => {
             {isAuthenticated ? (
                 <>
                 <Stack.Screen
-                name="MainScreen"
-                options={{ headerShown: false }}
-                children={(props) => <ProtectedRoute component={BottomTabNavigator} {...props} />}
+                  name="MainScreen"
+                  options={{ headerShown: false }}
+                  children={(props) => <ProtectedRoute component={BottomTabNavigator} {...props} />}
+                />
+                <Stack.Screen
+                  name="Address"
+                  component={AddressScreen}
+                  options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                  name="Test"
+                  component={YourComponent}
+                  options={{ headerShown: false }}
                 />
                 </>
               ) : (
