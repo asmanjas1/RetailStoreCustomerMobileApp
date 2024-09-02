@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, Alert} from 'react-native';
+import { StyleSheet, Alert } from 'react-native';
 import * as Location from 'expo-location';
 
 const LocationSelector = () => {
 
   useEffect(() => {
-    handleSelectCurrentLocation();
+    //handleSelectCurrentLocation();
   }, []);
 
   // const handleSelectCurrentLocation = async () => {
@@ -19,7 +19,7 @@ const LocationSelector = () => {
   // }
 
   return (
-        <></>
+    <></>
   );
 };
 
@@ -35,8 +35,7 @@ export const fetchUserCurrentPosition = async () => {
     });
     return loc;
   } catch (error) {
-    console.log(error);
-    Alert.alert('Error', 'Something went wrong while fetching the location.');
+    return;
   }
 }
 

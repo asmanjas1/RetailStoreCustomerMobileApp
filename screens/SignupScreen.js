@@ -3,7 +3,7 @@ import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, TextInput
   TouchableOpacity, ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import { getErrorMsgFromAxiosErrorObject } from '../utils/AppUtils';
+import { getAPIUrl, getErrorMsgFromAxiosErrorObject } from '../utils/AppUtils';
 import { useAuth } from '../navigation/AuthContext';
 import { commonStyles } from '../utils/CommonStyles';
 
@@ -30,9 +30,9 @@ const SignupScreen = ({ navigation }) => {
     if (validateForm()) {
       setIsLoading(true);
       const user = { phoneNumber, password, name };
-      axios.post("https://retailstorecloudbase.el.r.appspot.com/v1/person/signup", user)
+      axios.post(getAPIUrl() + "/person/signup", user)
       .then(response => {
-        axios.post("https://retailstorecloudbase.el.r.appspot.com/v1/person/signin", user)
+        axios.post(getAPIUrl() + "/person/signin", user)
         .then(response => {
           AsyncStorage.setItem('user', JSON.stringify(response.data));
           setIsLoading(false);

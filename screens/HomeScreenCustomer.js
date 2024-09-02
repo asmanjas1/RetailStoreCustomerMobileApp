@@ -1,100 +1,108 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 import {
   View, StyleSheet, TextInput, SafeAreaView, ScrollView, Platform, Pressable,
-  Text, Button, Modal, Dimensions
+  Text, Button, Modal, Dimensions,
+  ImageBackground,
+  Animated,
+  ActivityIndicator,
+  FlatList
 } from 'react-native';
-import { fetchUserCurrentPosition, getAddress } from '../components/LocationSelector';
 import CategoryList from './CategoryList';
 import { Ionicons } from "@expo/vector-icons";
 import { MaterialIcons } from "@expo/vector-icons";
-import { Entypo } from "@expo/vector-icons";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+import { getAPIUrl } from '../utils/AppUtils';
+import { TouchableOpacity } from 'react-native';
+import { useRoute } from '@react-navigation/native';
+import * as Location from 'expo-location';
 
-const HomeScreenCustomer = ({navigation}) => {
-  const [currentLocationObj, setcurrentLocationObj] = useState(null);
+const HomeScreenCustomer = ({ navigation }) => {
+  const route = useRoute();
   const [selectedAddress, setselectedAddress] = useState(null);
-  const [addressModalVisible, setaddressModalVisible] = useState(false);
-  const [addresses, setAddresses] = useState([]);
+  const [customerHomeScreenLoaderActive, setcustomerHomeScreenLoaderActive] = useState(false);
+  const [customerHomeScreenStoreAvailableMsg, setcustomerHomeScreenStoreAvailableMsg] = useState(null);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerTitle: 'Buy Items',
+      headerTitleAlign: 'center',
+      headerBackground: () => (
+        <ImageBackground
+          source={require('../assets/header-background.jpg')}
+          style={{ width: '100%', height: '100%' }}
+        />
+      ),
+      headerRight: () => (
+        <TouchableOpacity style={{ marginRight: 10 }} onPress={() => navigation.navigate('Settings')}>
+          <MaterialIcons name="account-circle" size={40} />
+        </TouchableOpacity>
+      ),
+      headerStyle: {
+        height: 90,
+      },
+      headerTitleStyle: {
+        fontWeight: 'bold',
+      },
+    });
+  }, [navigation]);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
-      const parentNavigation = navigation.getParent();
-      if(parentNavigation) {
-        const routes = parentNavigation.getState() && parentNavigation.getState().routes ? parentNavigation.getState().routes : [] ;
-        routes.forEach(item => {
-          if(item && item.params && item.params.comingFrom && item.params.comingFrom == "Address") {
-            fetchAddresses();
-          }
-        }
-        );
+      if (route.params?.fromAddressSelectionScreen) {
+        navigation.setParams({ fromAddressSelectionScreen: false });
+        setInitialAddress();
       }
     });
-
     return unsubscribe;
-  }, [navigation]);
-
+  }, [navigation, route]);
 
   useEffect(() => {
-    fetchAddresses();
+    checkLocationPermission();
   }, []);
 
-  useEffect(() => {
-    if (addressModalVisible) {
-      fetchAddresses();
+  const checkLocationPermission = async () => {
+    const { status } = await Location.getForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      navigation.navigate('AddressSelectionScreen');
+    } else {
+      setInitialAddress();
     }
-  }, [addressModalVisible]);
+  };
 
-  const fetchcurrentLocation = async () => {
-    let loc = await fetchUserCurrentPosition();
-    const result = await getAddress(loc.coords);
-    setcurrentLocationObj(result);
+  const setInitialAddress = async () => {
+    let currAddress = await AsyncStorage.getItem('currAddress');console.log(currAddress);
+    if(currAddress){
+      currAddress = JSON.parse(currAddress);
+      setselectedAddress(currAddress);
+      fetchApplicableStoreDetails(currAddress.longitude, currAddress.latitude);
+    } else {
+      navigation.navigate('AddressSelectionScreen');
+    }
   }
 
-  const fetchAddresses = async () => {
-    try {
-      let user = await AsyncStorage.getItem('user');
-      user = JSON.parse(user);
-      axios.post(
-        `https://retailstorecloudbase.el.r.appspot.com/v1/address/getAllAddressById/${user.phoneNumber}`, {})
-        .then(response => {
-          let savedAddress = response.data;
-          setAddresses(savedAddress);
-          if(savedAddress && savedAddress.length > 0) {
-            let selectedAddress = savedAddress.filter(add => { add.lastUsedForOrder });
-            if(selectedAddress && selectedAddress.length > 0) {
-              setselectedAddress(selectedAddress[0]);
-            } else {
-              setselectedAddress(savedAddress[0]);
-            }
-          } else {
-            if(!addressModalVisible) {
-              fetchcurrentLocation();
-            }
-          }
-        }).catch(error => {
-          if(!addressModalVisible) {
-            fetchcurrentLocation();
-          }
-          console.log(error);
-        });
-    } catch (error) {
-      if(!addressModalVisible) {
-        fetchcurrentLocation();
-      }
-      console.log("error", error);
-    }
+  const fetchApplicableStoreDetails = (longitude, latitude) => {
+    setcustomerHomeScreenLoaderActive(false);//
+    axios.get(getAPIUrl('storeservice') + `/store/getNearestStore?longitude=${longitude}&latitude=${latitude}`)
+    .then((response) => {
+console.log(response.data);
+    }).catch(error => {
+      setcustomerHomeScreenStoreAvailableMsg("No Store available");
+    })
+  }
+
+  const [cartItems, setCartItems] = useState(0);
+  const addItemToCart = () => {
+    setCartItems(cartItems + 1);
   };
 
   return (
     <>
-      <SafeAreaView
-        style={{
-          paddingTop: Platform.OS === "android" ? 40 : 0,
-          flex: 1,
-          backgroundColor: "white",
-        }}
-      >
+      {customerHomeScreenLoaderActive ?
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color="#0000ff" />
+        </View>
+        :
         <ScrollView>
           <View
             style={{
@@ -104,7 +112,9 @@ const HomeScreenCustomer = ({navigation}) => {
               alignItems: "center",
             }}>
             <Pressable
-              onPress={() => setaddressModalVisible(!addressModalVisible)}
+              onPress={() => {
+                navigation.navigate('AddressSelectionScreen');
+              }}
               style={{
                 flexDirection: "row",
                 alignItems: "center",
@@ -115,158 +125,73 @@ const HomeScreenCustomer = ({navigation}) => {
             >
               <Ionicons name="location-outline" size={24} color="black" />
               < >
-                {selectedAddress ? (
-                  <Text style={{ fontSize: 13, fontWeight: "500" }}>
-                    Deliver to {selectedAddress?.addressLine1} {selectedAddress.city}
+                {selectedAddress && !selectedAddress.postalCode ? (
+                  <>
+                  <Text style={{ fontSize: 13, fontWeight: "500", width: 220 }} numberOfLines={1} ellipsizeMode="tail">
+                    Deliver to {selectedAddress?.addressLine1} {selectedAddress?.locality} {selectedAddress?.city} {selectedAddress?.pincode}
                   </Text>
+                  </>
                 ) : (
-                  <Text style={{ fontSize: 13, fontWeight: "500" }}>
-                    Deliver to {currentLocationObj?.street} {currentLocationObj?.district} {currentLocationObj?.city}
+                  <>
+                  <Text style={{ fontSize: 13, fontWeight: "500", width: 220 }} numberOfLines={1} ellipsizeMode="tail">
+                    Deliver to {selectedAddress?.street} {selectedAddress?.name} {selectedAddress?.district} {selectedAddress?.city} {selectedAddress?.subregion}
                   </Text>
+                  <Text style={{ fontSize: 13, fontWeight: "500" }}>{selectedAddress?.postalCode}</Text>
+                  </>
                 )}</>
               <MaterialIcons name="keyboard-arrow-down" size={24} color="black" />
             </Pressable>
           </View>
-          <TextInput style={styles.searchBar} placeholder="Search products..." />
-          <CategoryList />
-        </ScrollView>
-      </SafeAreaView>
-
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={addressModalVisible}
-        onRequestClose={() => setaddressModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Pressable
-              style={styles.closeButton}
-              onPress={() => setaddressModalVisible(false)}
-            >
-              <Ionicons name="close" size={24} color="black" />
-            </Pressable>
-            <View style={{ marginBottom: 8 }}>
-              <Text style={{ fontSize: 16, fontWeight: "500" }}>
-                Choose your Location
-              </Text>
-
-              <Text style={{ marginTop: 5, fontSize: 16, color: "gray" }}>
-                Select a delivery location to see product availabilty and delivery
-                options
+          {customerHomeScreenStoreAvailableMsg == null ?
+            <>
+              <Pressable onPress={addItemToCart} style={styles.addButton}>
+                <Text style={styles.addButtonText}>Add Item to Cart</Text>
+              </Pressable>
+            </>
+            :
+            <View style={{ alignItems: 'center', marginTop: 100 }}>
+              <Text style={{ fontSize: 13, fontWeight: "500" }}>
+                {customerHomeScreenStoreAvailableMsg}
               </Text>
             </View>
-
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={{ flexDirection: "row", zIndex: 2000 }}
-              scrollEnabled={true}
-            >
-              {addresses?.map((item, index) => (
-                <Pressable
-                  onPress={() => {
-                    setselectedAddress(item);
-                    setaddressModalVisible(false);
-                  }}
-                  style={{
-                    width: 140,
-                    height: 140,
-                    borderColor: "#D0D0D0",
-                    borderWidth: 1,
-                    padding: 10,
-                    justifyContent: "center",
-                    alignItems: "center",
-                    gap: 3,
-                    marginRight: 15,
-                    marginTop: 10,
-                    backgroundColor: selectedAddress === item ? "#FBCEB1" : "white"
-                  }}
-                  key={index}
-                >
-                  <View
-                    style={{ flexDirection: "row", alignItems: "center", gap: 3 }}
-                  >
-                    <Text style={{ fontSize: 13, fontWeight: "bold" }}>
-                      {item?.addressLine1}
-                    </Text>
-                    <Entypo name="location-pin" size={24} color="red" />
-                  </View>
-
-                  <Text
-                    numberOfLines={1}
-                    style={{ width: 130, fontSize: 13, textAlign: "center" }}
-                  >
-                    {item?.addressLine2},{item?.landmark}
-                  </Text>
-
-                  <Text
-                    numberOfLines={1}
-                    style={{ width: 130, fontSize: 13, textAlign: "center" }}
-                  >
-                    {item?.locality}
-                  </Text>
-                  <Text
-                    numberOfLines={1}
-                    style={{ width: 130, fontSize: 13, textAlign: "center" }}
-                  >
-                    {item?.city},{item?.state}
-                  </Text>
-                </Pressable>
-              ))}
-            </ScrollView>
-            <Pressable
-              onPress={() => {
-                setaddressModalVisible(false);
-                navigation.navigate("Address", { comingFrom: 'Home' });
-              }}
-              style={{
-                width: 140,
-                height: 140,
-                borderColor: "#D0D0D0",
-                marginTop: 10,
-                borderWidth: 1,
-                padding: 10,
-                justifyContent: "center",
-                alignItems: "center",
-              }}
-            >
-              <Text
-                style={{
-                  textAlign: "center",
-                  color: "#0066b2",
-                  fontWeight: "500",
-                }}
-              >
-                Add an Address
-              </Text>
-            </Pressable>
+          }
+        </ScrollView>
+      }
+      {cartItems > 0 && (
+        <TouchableOpacity
+          onPress={() => console.log('Floating Button Pressed')}
+        >
+          <View style={[styles.floatingCart]}>
+            <MaterialIcons name="shopping-cart" size={24} color="#fff" />
+            <Text style={styles.cartText}>Cart ({cartItems})</Text>
           </View>
-        </View>
-      </Modal>
+        </TouchableOpacity>
+      )}
     </>
   );
 };
 
 const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)'
-  },
-  modalContent: {
-    width: Dimensions.get('window').width * 0.9,
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 20,
-    alignItems: 'center',
-  },
-  closeButton: {
+  floatingCart: {
     position: 'absolute',
-    top: 10,
-    right: 10,
-    zIndex: 1,
+    bottom: 20,
+    right: 20,
+    backgroundColor: '#007bff',
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    borderRadius: 30,
+    flexDirection: 'row',
+    alignItems: 'center',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+  },
+  cartText: {
+    color: '#fff',
+    fontSize: 16,
+    marginLeft: 10,
   },
 });
 

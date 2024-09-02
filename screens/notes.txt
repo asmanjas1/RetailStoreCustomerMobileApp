@@ -1,0 +1,41 @@
+<Tab.Navigator
+        initialRouteName="Orders"
+        screenOptions={({ route }) => ({
+          tabBarIcon: ({ color, size }) => {
+            let iconName;
+            if (route.name === 'Store') {
+              iconName = 'store';
+            } else if (route.name === 'Orders') {
+              iconName = 'assignment';
+            } else if (route.name === 'Profile') {
+              iconName = 'person';
+            }
+            return <Icon name={iconName} size={size} color={color} />;
+          },
+          tabBarActiveTintColor: 'green',
+          tabBarInactiveTintColor: 'gray',
+        })}
+      >
+        <Tab.Screen name="Orders" component={OrdersScreen} options={{ headerShown: false }} />
+        <Tab.Screen name="Store" component={StoreScreen} options={{ headerShown: false }} />
+        <Tab.Screen name="Profile" component={ProfileScreen} options={{ headerShown: false }} />
+      </Tab.Navigator>
+
+      // useEffect(() => {
+  //   const unsubscribe = navigation.addListener('focus', () => {
+  //     const parentNavigation = navigation.getParent();
+  //     if (parentNavigation) {
+  //       const routes = parentNavigation.getState() && parentNavigation.getState().routes ? parentNavigation.getState().routes : [];
+  //       routes.forEach(item => {
+  //         if (item && item.params && item.params.comingFrom && item.params.comingFrom == "Address") {
+  //           fetchStoreDetails();
+  //         }
+  //       }
+  //       );
+  //     }
+  //   });
+
+  //   return unsubscribe;
+  // }, [navigation]);
+
+  

@@ -14,3 +14,14 @@ export const isLoggedIn = async () => {
       return false;
     }
 }
+
+export const getAPIUrl = (serviceName) => {
+  if(serviceName) {
+    return "https://" + serviceName + "-dot-retailstorecloudbase.el.r.appspot.com/v1";
+  }
+  return "https://retailstorecloudbase.el.r.appspot.com/v1";
+}
+
+export const getMapApi = () => {
+  return "AIzaSyBfvPwGA0dBBwwADiWm3GbQ8b9HFFECbkg";
+} 

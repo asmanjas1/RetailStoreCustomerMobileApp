@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, TouchableOpacity, 
+import {
+  View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, TouchableOpacity,
   ActivityIndicator, TextInput,
-  Text} from 'react-native';
+  Text
+} from 'react-native';
 import axios from 'axios';
-import { getErrorMsgFromAxiosErrorObject } from '../utils/AppUtils';
+import { getAPIUrl, getErrorMsgFromAxiosErrorObject } from '../utils/AppUtils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../navigation/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
@@ -27,16 +29,16 @@ const LoginScreen = ({ navigation }) => {
 
   const handleLogin = async () => {
     if (validateForm()) {
-        setIsLoading(true);
-        const user = { phoneNumber, password };
-        axios.post("https://retailstorecloudbase.el.r.appspot.com/v1/person/signin", user)
+      setIsLoading(true);
+      const user = { phoneNumber, password };
+      axios.post(getAPIUrl() + "/person/signin", user)
         .then(response => {
           AsyncStorage.setItem('user', JSON.stringify(response.data));
           setIsLoading(false);
           login();
         }).catch(error => {
-            setIsLoading(false);
-            alert(getErrorMsgFromAxiosErrorObject(error));
+          setIsLoading(false);
+          alert(getErrorMsgFromAxiosErrorObject(error));
         });
     }
   };
@@ -51,7 +53,7 @@ const LoginScreen = ({ navigation }) => {
         <ActivityIndicator size="large" color="#0000ff" />
       </View>
     );
-}
+  }
 
   return (
     <KeyboardAvoidingView
@@ -70,17 +72,17 @@ const LoginScreen = ({ navigation }) => {
           />
           {errors.phoneNumber && <Text style={styles.errorText}>{errors.phoneNumber}</Text>}
           <View style={styles.passwordContainer}>
-          <TextInput
-            placeholder="Password"
-            secureTextEntry={!isPasswordVisible}
-            value={password}
-            onChangeText={setPassword}
-            style={styles.passwordInput}
-            error={!!errors.password}
-          />
-          <TouchableOpacity onPress={togglePasswordVisibility} style={styles.eyeIcon}>
-            <Ionicons  name={isPasswordVisible ? 'eye-off' : 'eye'} size={24} color="grey" />
-          </TouchableOpacity>
+            <TextInput
+              placeholder="Password"
+              secureTextEntry={!isPasswordVisible}
+              value={password}
+              onChangeText={setPassword}
+              style={styles.passwordInput}
+              error={!!errors.password}
+            />
+            <TouchableOpacity onPress={togglePasswordVisibility} style={styles.eyeIcon}>
+              <Ionicons name={isPasswordVisible ? 'eye-off' : 'eye'} size={24} color="grey" />
+            </TouchableOpacity>
           </View>
           {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
           <TouchableOpacity style={commonStyles.button} onPress={handleLogin} disabled={isLoading}>

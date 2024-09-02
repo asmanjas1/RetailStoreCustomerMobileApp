@@ -1,12 +1,29 @@
-// src/screens/OrdersScreen.js
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { Platform, Pressable, SafeAreaView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Button } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
-const OrdersScreen = () => {
+const OrdersScreen = ({navigation }) => {
   return (
-    <View style={styles.container}>
-      <Text style={styles.text}>Your Orders</Text>
-    </View>
+    <>
+      <SafeAreaView
+        style={{
+          paddingTop: Platform.OS === "android" ? 40 : 0,
+          flex: 1,
+          backgroundColor: "white",
+        }}
+      >
+        <View
+            style={{
+              backgroundColor: "#00CED1",
+              padding: 10,
+              flexDirection: "row",
+              alignItems: "center",
+            }}>
+            
+          </View>
+      </SafeAreaView>
+    </>
   );
 };
 
@@ -15,10 +32,13 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#f5f5f5',
   },
-  text: {
-    fontSize: 18,
-    color: '#333',
+  userIcon: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    zIndex: 1,
   },
 });
 

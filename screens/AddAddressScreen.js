@@ -19,8 +19,32 @@ import { BottomModal, ModalContent, SlideAnimation } from "react-native-modals";
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getAPIUrl, getMapApi } from "../utils/AppUtils";
 
-const AddressScreen = () => {
+const AddAddressScreen = () => {
+    const [keyboardOffset, setKeyboardOffset] = useState(0);
+    useEffect(() => {
+        const keyboardDidShowListener = Keyboard.addListener(
+            'keyboardDidShow',
+            (event) => {
+                if (Platform.OS === 'ios') {
+                    setKeyboardOffset(event.endCoordinates.height);
+                }
+            }
+        );
+        const keyboardDidHideListener = Keyboard.addListener(
+            'keyboardDidHide',
+            () => {
+                setKeyboardOffset(0);
+            }
+        );
+
+        return () => {
+            keyboardDidShowListener.remove();
+            keyboardDidHideListener.remove();
+        };
+    }, []);
+
     const navigation = useNavigation();
     const [addressLine1, setaddressLine1] = useState("");
     const [addressLine2, setaddressLine2] = useState("");
@@ -61,7 +85,11 @@ const AddressScreen = () => {
             }
             let user = await AsyncStorage.getItem('user');
             user = JSON.parse(user);
-            axios.post(`https://retailstorecloudbase.el.r.appspot.com/v1/address/save/${user.phoneNumber}`, address)
+            let url = getAPIUrl() + `/address/save/${user.phoneNumber}`;
+            if (user.userType === 'store') {
+                url = getAPIUrl("storeservice") + `/store/add/${user.phoneNumber}`;
+            }
+            axios.post(url, address)
                 .then((response) => {
                     setModalVisible(false);
                     Alert.alert("Success", "Addresses added successfully");
@@ -76,7 +104,7 @@ const AddressScreen = () => {
                     setlatitude("");
                     setgoogleObject(null);
                     setTimeout(() => {
-                        navigation.navigate("MainScreen", {comingFrom: 'Address'});
+                        navigation.goBack();
                     }, 500);
                 }).catch((error) => {
                     setModalVisible(false);
@@ -134,7 +162,7 @@ const AddressScreen = () => {
                                 }
                             }}
                             query={{
-                                key: GOOGLE_API_KEY,
+                                key: getMapApi(),
                                 language: 'en',
                                 components: 'country:in',
                             }}
@@ -170,6 +198,7 @@ const AddressScreen = () => {
                 <Pressable
                     onPress={() => {
                         if (!googleAutoCompleteInputValue) {
+                            //navigation.navigate('MainScreen', { fromAddress: true });
                             Alert.alert("Required", "Please select location first");
                         } else {
                             setModalVisible(true);
@@ -198,7 +227,7 @@ const AddressScreen = () => {
                     })
                 }
                 modalStyle={{
-                    bottom: Platform.OS === 'ios' ? keyboardHeight : 0,
+                    paddingBottom: keyboardOffset,
                 }}
                 onHardwareBackPress={() => { return true }
                 }
@@ -284,7 +313,7 @@ const AddressScreen = () => {
     );
 };
 
-export default AddressScreen;
+export default AddAddressScreen;
 
 const styles = StyleSheet.create({
     closeButton: {
